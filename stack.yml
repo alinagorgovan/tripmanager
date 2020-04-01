@@ -12,7 +12,15 @@ services:
       MYSQL_PASSWORD: root
     ports:
       - "32000:3306"
-      
+  db_adaptor: 
+    image: db_adaptor
+    depends_on:
+      - db
+    links:
+      - db
+    ports:
+      - "5001:5001"
+
 
 volumes:
   db_data: {}
