@@ -161,7 +161,8 @@ def init():
         port="3306",
         user="root",
         passwd="root",
-        database="trip_manager"
+        database="trip_manager",
+        autocommit=True
     )
 
     db_cursor = mydb.cursor()
@@ -455,8 +456,8 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
 
-    email = request.form.get('email')
-    password = request.form.get('password')
+    email = request.json['email']
+    password = request.json['passwd']
 
     result = dbConn.login(email, password)
 
