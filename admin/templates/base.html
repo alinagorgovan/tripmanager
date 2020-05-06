@@ -1,0 +1,40 @@
+{% extends 'bootstrap/base.html' %}
+
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+
+{% block navbar %}
+    <nav class="navbar navbar-inverse navbar-static-top">
+        <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">Trip manager</a>
+        </div>
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="/index">Home</a></li>
+                <li><a href="/statistics">Statistics</a></li>
+                <li><a href="/trip_photos">Photos</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                {% if user %}
+                    <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Log out</a></li>
+                {% else %}
+                    <li><a href="/register"><span class="glyphicon glyphicon-user"></span> Register</a></li>
+                    <li><a href="/login"><span class="glyphicon glyphicon-log-in"></span> Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block app_content %}{% endblock %}
+    </div>
+{% endblock %}

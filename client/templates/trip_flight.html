@@ -1,0 +1,23 @@
+{% if not trip[5] %}
+    <summary>No flights available</summary>
+{% else %}
+    <summary>View flights info</summary>
+    <table class="table table-hover" style="font-size:15px">
+    <thead class="thead-dark">
+        <tr>
+        <th scope="col">Flight_number</th>
+        <th scope="col">Departure time</th>
+        <th scope="col">Arrival_time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flight in trip[5] %}
+            <tr>
+                <td>{{ flight[2] }}</td>
+                <td>{{ flight[3] }}</td>
+                <td>{{ flight[4] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+{% endif %}

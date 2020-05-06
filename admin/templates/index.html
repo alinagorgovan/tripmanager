@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="container" style="text-align:center;">
+        {% if user %}
+            <h1> Welcome back, {{ user }} !</h1>
+            <br>
+            <br>
+            <a href="/users" class="btn btn-info btn-lg" role="button">View Users</a>
+            <br>
+            <br>
+            <a href="/statistics" class="btn btn-info btn-lg" role="button">View Statistics</a>
+            <br>
+            <br>
+        {% else %}
+            <h1> Welcome to Trip Manager! Please log in</h1>
+            <br>
+            <br>
+            <a href="/login" class="btn btn-info btn-lg" role="button">Log In</a>
+        {% endif %}
+    </div>
+{% endblock %}

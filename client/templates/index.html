@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="container" style="text-align:center;">
+        {% if user %}
+            <h1> Welcome back, {{ user['firstname'] }} !</h1>
+            <br>
+            <br>
+            <a href="/newtrip" class="btn btn-info btn-lg" role="button">Add a New Trip</a>
+            <br>
+            <br>
+            <a href="/newflight" class="btn btn-info btn-lg" role="button">Add a New Plane Ticket</a>
+            <br>
+            <br>
+            <a href="/trips" class="btn btn-info btn-lg" role="button">View Trips</a>
+            <br>
+            <br>
+            <a href="/flights" class="btn btn-info btn-lg" role="button">View Flights</a>
+        {% else %}
+            <h1> Welcome to Trip Manager! Log in or Register now!</h1>
+            <br>
+            <br>
+            <a href="/register" class="btn btn-info btn-lg" role="button">Register</a>
+            <br>
+            <br>
+            <a href="/login" class="btn btn-info btn-lg" role="button">Log In</a>
+        {% endif %}
+    </div>
+{% endblock %}

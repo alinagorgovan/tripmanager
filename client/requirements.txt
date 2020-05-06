@@ -1,0 +1,8 @@
+flask
+flask_bootstrap
+Werkzeug
+requests
+flask_wtf
+pycountry
+wtforms
+email_validator

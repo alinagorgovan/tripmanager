@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <div class="container">
+        <h1> Most visited countries </h1>
+        <br>
+        <br>
+        <table class="table table-hover" style="font-size:15px">
+        <thead class="thead-dark">
+            <tr>
+            <th scope="col">Count</th>
+            <th scope="col">Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for country,value in countries.items() %}
+                <tr>
+                    <td>{{ value }}</td>
+                    <td>{{ country }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        
+    </div>
+{% endblock %}

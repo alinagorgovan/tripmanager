@@ -12,15 +12,107 @@ services:
       MYSQL_PASSWORD: root
     ports:
       - "32000:3306"
-  db_adaptor: 
-    image: db_adaptor
+    deploy:
+      restart_policy:
+        condition: on-failure
+        
+  db_adapter: 
+    image: alinagorgovan/tripmanager:db_adapter
     depends_on:
       - db
     links:
       - db
     ports:
       - "5001:5001"
-
-
+    deploy:
+      restart_policy:
+        condition: on-failure
+        
+  client: 
+    image: alinagorgovan/tripmanager:client
+    depends_on:
+      - db
+      - db_adapter
+    links:
+      - db
+      - db_adapter
+    ports:
+      - "5002:5002"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        
+  admin: 
+    image: alinagorgovan/tripmanager:admin
+    depends_on:
+      - db
+      - db_adapter
+    links:
+      - db
+      - db_adapter
+    ports:
+      - "5003:5003"
+    deploy:
+      restart_policy:
+        condition: on-failure
+        
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    links:
+      - db
+      - db_adapter
+      - client
+      - admin
+    depends_on:
+      - cadvisor
+      - node-exporter
+      - admin
+      - client
+      - db_adapter
+    deploy:
+      restart_policy:
+        condition: on-failure
+        
+  cadvisor:
+    image: google/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    deploy:
+      mode: global
+      restart_policy:
+              condition: on-failure
+              
+  node-exporter:
+    image: prom/node-exporter
+    volumes:
+      - '/proc:/host/proc:ro'
+      - '/sys:/host/sys:ro'
+      - '/:/rootfs:ro'
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+    deploy:
+      restart_policy:
+        condition: on-failure
+      
 volumes:
   db_data: {}
+  prometheus: {}

@@ -29,6 +29,20 @@ class dbConnection():
                     'email' : t[1],
                     'firstname' : t[2],
                     'lastname' : t[3]}
+        
+        return None
+        
+    def get_users(self):
+        self.db_cursor.callproc('get_users')
+        users = []
+        for result in self.db_cursor.stored_results():
+            for t in result.fetchall():
+                users.append( {'id' : t[0],
+                        'email' : t[1],
+                        'firstname' : t[2],
+                        'lastname' : t[3]})
+        
+        return users
 
 
     def add_trip(self, user_id, country, city, departure_date, return_date):
@@ -37,6 +51,8 @@ class dbConnection():
         print(ret)
         for result in self.db_cursor.stored_results():
             return result.fetchall()[0][0]
+        
+        return None
 
     def add_flight(self, trip_id, flight_number, departure_time, arrival_time, from_city, to_city):
         args = [trip_id, flight_number, departure_time, arrival_time, from_city, to_city]
@@ -118,8 +134,8 @@ class dbConnection():
         
         return trips
     
-    def get_most_visited_countries(self, user_id):
-        self.db_cursor.callproc('MostVisitedCountries', [user_id])
+    def get_most_visited_countries(self):
+        self.db_cursor.callproc('MostVisitedCountries')
         countries = {}
         for result in self.db_cursor.stored_results():
             for t in result.fetchall():
@@ -153,6 +169,11 @@ class dbConnection():
                 photos.append([t[0], t[1], t[2]])
         
         return photos
+        
+    def delete_user(self, user_id):
+        sql_delete_query = f"delete from users where user_id = {user_id};"
+        self.db_cursor.execute(sql_delete_query)
+        self.mydb.commit()
 
 
 def init():
@@ -199,7 +220,7 @@ def init():
             rating INT UNSIGNED,
             country VARCHAR(20) NOT NULL,
             city VARCHAR(20) NOT NULL,
-            foreign key (user_id) references users(user_id)
+            foreign key (user_id) references users(user_id) ON DELETE SET NULL
         );
 
         create table if not exists plane_tickets (
@@ -210,14 +231,14 @@ def init():
             arrival_time DATETIME,
             from_city varchar(100) not null,
             to_city varchar(100) not null,
-            foreign key (trip_id) references trips(trip_id)
+            foreign key (trip_id) references trips(trip_id) ON DELETE SET NULL
         );
 
         create table if not exists pictures (
             picture_id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             trip_id INT(6) UNSIGNED,
             path varchar(50),
-            foreign key (trip_id) references trips(trip_id)
+            foreign key (trip_id) references trips(trip_id) ON DELETE SET NULL
         );
 
 
@@ -240,12 +261,18 @@ def init():
         DROP PROCEDURE IF EXISTS GetFlightsFromTo;
         DROP PROCEDURE IF EXISTS GetTripsCountry;
         DROP PROCEDURE IF EXISTS GetTripsDate;
+        DROP PROCEDURE IF EXISTS get_users;
 
         CREATE PROCEDURE LogIn(
             IN email_p varchar(100),
             IN passwd_p varchar(100))
         BEGIN
             SELECT * from users where users.email=email_p and users.passwd=passwd_p;
+        END;
+        
+        CREATE PROCEDURE get_users()
+        BEGIN
+            SELECT * from users;
         END;
 
         CREATE PROCEDURE GetTrips(
@@ -298,10 +325,9 @@ def init():
             SELECT * from trips where user_id=user_id_p and departure_date < CURDATE();
         END;
 
-        CREATE PROCEDURE MostVisitedCountries(
-            IN user_id_p INT(6))
+        CREATE PROCEDURE MostVisitedCountries()
         BEGIN
-            SELECT country, count(*) as c from trips where user_id=user_id_p
+            SELECT country, count(*) as c from trips
             group by country
             order by c DESC;
         END;
@@ -429,11 +455,12 @@ def init():
             print(result.fetchall())
         else:
             print("Number of rows affected by statement '{}': {}".format(result.statement, result.rowcount))
+    mydb.commit()
     db_cursor.close()
     mydb.close()
 
 
-dbConn = dbConnection()
+db_conn = dbConnection()
 
 
 @app.route("/register", methods=["POST"])
@@ -442,30 +469,134 @@ def register():
     print(request.json)
 
     email = request.json['email']
-    password = request.json['passwd']
+    password = request.json['password']
     firstname = request.json['firstname']
     lastname = request.json['lastname']
 
-    dbConn.register(email, firstname, lastname, password)
-
-    return jsonify({
-        'status' : 'Success',
-        'reason' : 'Ok'
-    })
-
-@app.route("/login", methods=["POST"])
-def login():
-
-    email = request.json['email']
-    password = request.json['passwd']
-
-    result = dbConn.login(email, password)
+    result = db_conn.register(email, firstname, lastname, password)
 
     return jsonify({
         'status' : 'Success',
         'reason' : 'Ok',
         'data' : result
     })
+
+@app.route("/login", methods=["POST"])
+def login():
+
+    email = request.json['email']
+    password = request.json['password']
+
+    result = db_conn.login(email, password)
+
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'data' : result
+    })
+
+@app.route("/newtrip", methods=["POST"])
+def add_trip():
+    
+    data = request.json
+
+    result = db_conn.add_trip(data['user_id'], data['city'], data['country'], data['departure_date'], data['return_date'])
+    
+    if not result:
+            return jsonify({
+            'status' : 'Error',
+            'reason' : 'Server error'
+        }) 
+
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'data' : result
+    })
+    
+@app.route("/newflight", methods=["POST"])
+def add_flight():
+    data = request.json
+
+    db_conn.add_flight(data['trip_id'], data['flight_no'], data['departure_time'], data['arrival_time'], data['from_city'], data['to_city'])
+
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+    })
+@app.route("/add_picture", methods=["POST"])
+def add_picture():
+        
+    data = request.json
+
+    db_conn.add_picture(data['trip_id'], data['path'])
+
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+    })
+
+@app.route('/trips', methods={'GET', 'POST'})
+def trips():
+    trips = db_conn.get_trips(request.json['user_id'])
+    for trip in trips:
+        trip.append(db_conn.get_flights_trip(trip[0]))
+        
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'trips' : trips
+    })  
+    
+@app.route('/get_trip_choices', methods={'GET', 'POST'})
+def get_trip_choices():
+    trips = db_conn.get_trip_choices(request.json['user_id'])
+        
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'trips' : trips
+    }) 
+    
+@app.route('/flights', methods={'GET', 'POST'})
+def flights():
+    flights = db_conn.get_flights_user(request.json['user_id'])
+        
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'flights' : flights
+    })
+
+@app.route('/statistics', methods={'GET'})
+def statistics():
+    stat = db_conn.get_most_visited_countries()
+        
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'statistics' : stat
+    })
+    
+@app.route('/users', methods={'GET'})
+def users():
+    result = db_conn.get_users()
+        
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+        'users' : result
+    }) 
+
+@app.route('/delete_user', methods={'POST'})
+def delete_user():
+    db_conn.delete_user(request.json['user_id'])
+        
+    return jsonify({
+        'status' : 'Success',
+        'reason' : 'Ok',
+    }) 
+    
 
 if __name__ == "__main__":
     init()

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+
+{% block app_content %}
+    <div class="container">
+        <h1> Your Flights</h1>
+        <br>
+        <br>
+        <a href="/newflight" class="btn btn-primary btn-lg" role="button">Add a New Plane Ticket</a>
+        <br>
+        <br>
+        <table class="table table-hover" style="font-size:20px">
+        <thead class="thead-dark">
+            <tr>
+            <th scope="col">Departure Airport</th>
+            <th scope="col">Flight number</th>
+            <th scope="col">Destination Airport</th>
+            <th scope="col">Departure time</th>
+            <th scope="col">Arrival time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+                {% include 'flight.html' %}
+            {% endfor %}
+        </tbody>
+        </table>
+        
+    </div>
+{% endblock %}
